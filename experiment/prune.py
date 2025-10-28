@@ -1,10 +1,16 @@
 import json
+# I'm assuming SGDPrunerConfig and other necessary imports are available in the scope
+# from causalpruner import SGDPrunerConfig 
 
 from .train import TrainingExperiment
 
 from .. import strategies
 from ..metrics import model_size, flops
 from ..util import printc
+from pathlib import Path
+
+
+
 
 
 class PruningExperiment(TrainingExperiment):
@@ -22,10 +28,12 @@ class PruningExperiment(TrainingExperiment):
                  pretrained=True,
                  resume=None,
                  resume_optim=False,
-                 save_freq=10):
+                 save_freq=10,
+                 **strategy_kwargs): 
 
         super(PruningExperiment, self).__init__(dataset, model, seed, path, dl_kwargs, train_kwargs, debug, pretrained, resume, resume_optim, save_freq)
         self.add_params(strategy=strategy, compression=compression)
+        self.strategy_kwargs = strategy_kwargs
 
         self.apply_pruning(strategy, compression)
 
@@ -35,13 +43,30 @@ class PruningExperiment(TrainingExperiment):
     def apply_pruning(self, strategy, compression):
         constructor = getattr(strategies, strategy)
         x, y = next(iter(self.train_dl))
-        self.pruning = constructor(self.model, x, y, compression=compression)
+        
+        strategy_init_kwargs = self.strategy_kwargs.copy()
+
+        if strategy == 'GlobalCausalPruning':
+            printc(f"Preparing special configuration for {strategy}", color='BLUE')
+            
+            if 'sgd_pruner_config' not in strategy_init_kwargs:
+                raise ValueError("For GlobalCausalPruning, you must provide an 'sgd_pruner_config' object when initializing PruningExperiment.")
+            
+            config = strategy_init_kwargs['sgd_pruner_config']
+            config.model = self.model
+            causal_ckpt_path =  Path('_results/causal_checkpoints')
+            causal_ckpt_path.mkdir(exist_ok=True)
+            config.checkpoint_dir = str(causal_ckpt_path)
+            strategy_init_kwargs['sgd_pruner_config'] = config
+        
+        self.pruning = constructor(self.model, x, y, compression=compression, **strategy_init_kwargs)
+        
         self.pruning.apply()
         printc("Masked model", color='GREEN')
 
     def run(self):
         self.freeze()
-        printc(f"Running {repr(self)}", color='YELLOW')
+        # printc(f"Running {repr(self)}", color='YELLOW')
         self.to_device()
         self.build_logging(self.train_metrics, self.path)
 
@@ -63,7 +88,6 @@ class PruningExperiment(TrainingExperiment):
     def pruning_metrics(self):
 
         metrics = {}
-        # Model Size
         size, size_nz = model_size(self.model)
         metrics['size'] = size
         metrics['size_nz'] = size_nz

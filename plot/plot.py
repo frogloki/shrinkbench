@@ -115,3 +115,8 @@ def plot_df(df,
     ticks = sorted(set(df[x_column]))
     plt.xticks(ticks, map(str, ticks))
     plt.legend()
+    
+
+# It's also good practice to clear the figure from memory afterwards,
+# especially if you create multiple plots in one script.
+    plt.clf() # Clears the current figure

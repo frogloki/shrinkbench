@@ -10,12 +10,14 @@ from tqdm import tqdm
 import json
 
 from .base import Experiment
-from .. import datasets
-from .. import models
-from ..metrics import correct
-from ..models.head import mark_classifier
-from ..util import printc, OnlineStats
+from shrinkbench import datasets
+from shrinkbench import models
+from shrinkbench.metrics import correct
+from shrinkbench.models.head import mark_classifier
+from shrinkbench.util import printc, OnlineStats
 
+from pathlib import PosixPath 
+from pathlib import Path
 
 class TrainingExperiment(Experiment):
 
@@ -216,8 +218,11 @@ class TrainingExperiment(Experiment):
                 ]
 
     def __repr__(self):
-        if not isinstance(self.params['model'], str) and isinstance(self.params['model'], torch.nn.Module):
-            self.params['model'] = self.params['model'].__module__
-        
-        assert isinstance(self.params['model'], str), f"\nUnexpected model inputs: {self.params['model']}"
-        return json.dumps(self.params, indent=4)
+        serializable_params = {}
+        for key, value in self.params.items():
+            if isinstance(value, Path):
+                serializable_params[key] = str(value)
+            else:
+                serializable_params[key] = value
+                
+        return json.dumps(serializable_params, indent=4)

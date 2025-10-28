@@ -2,6 +2,7 @@ import json
 import pathlib
 import string
 import pandas as pd
+from pathlib import PosixPath
 
 COLUMNS = ['dataset', 'model',
            'strategy', 'compression',
@@ -17,8 +18,11 @@ def df_from_results(results_path, glob='*'):
     results_path = pathlib.Path(results_path)
 
     for exp in results_path.glob(glob):
+        if not exp.is_dir():
+            continue
         with open(exp / 'params.json', 'r') as f:
-            params = eval(json.load(f)['params'])
+            params_str = json.load(f)['params']
+            params = eval(params_str, {"PosixPath": PosixPath})
         with open(exp / 'metrics.json', 'r') as f:
             metrics = json.load(f)
         logs = pd.read_csv(exp / 'logs.csv')
@@ -77,5 +81,5 @@ def broadcast_unitary_compression(df):
             if strategy is not None:
                 new_row = row.copy()
                 new_row['strategy'] = strategy
-                df = df.append(new_row, ignore_index=True)
+                df = df._append(new_row, ignore_index=True)
     return df

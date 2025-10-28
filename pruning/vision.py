@@ -7,7 +7,7 @@ from .modules import MaskedModule
 
 class VisionPruning(Pruning):
 
-    def __init__(self, model, inputs=None, outputs=None, compression=1):
+    def __init__(self, model, inputs=None, outputs=None, compression=1, **kwargs):
         super().__init__(model, inputs, outputs, compression=compression)
         self.prunable = self.prunable_modules()
         self.fraction = fraction_to_keep(self.compression, self.model, self.prunable)
