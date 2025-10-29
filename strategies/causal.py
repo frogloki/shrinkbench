@@ -38,7 +38,6 @@ class GlobalCausalPruning(VisionPruning):
         self.sgd_pruner_config = deepcopy(sgd_pruner_config)
         self.sgd_pruner_config.return_masks_only = True
         self.sgd_pruner_config.model = self.model      
-        self.sgd_pruner_config.trainer_config.prune_amount = self.fraction 
         
     def model_masks(self):
         """

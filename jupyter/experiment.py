@@ -11,7 +11,7 @@ from lightning.fabric import Fabric
 from torch.utils.data import DataLoader
 from tests.datasets import get_dataset
 from torchvision.transforms import v2
-
+import matplotlib.pyplot as plt
 from tests.trainer import (
     DataConfig,
 )
@@ -53,7 +53,7 @@ def parse_args() -> argparse.Namespace:
 
     # These are only used if strategy is 'GlobalCausalPruning'
     parser.add_argument('--num_prune_iterations', type=int, default=10, help='Number of iterations for causal pruning')
-    parser.add_argument('--num_prune_epochs', type=int, default=10, help='Number of epochs for pruning within each iteration')
+    parser.add_argument('--num_prune_epochs', type=int, default=1, help='Number of epochs for pruning within each iteration')
     parser.add_argument('--causal_pruner_train_lr', type=float, default=1e-3, help='Prune optimizer learning rate for Causal Pruning')
     parser.add_argument('--reset_weights_after_pruning', action=argparse.BooleanOptionalAction, default=False)
     parser.add_argument('--reset_params_after_pruning', action=argparse.BooleanOptionalAction, default=False)
@@ -64,11 +64,11 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument('--causal_pruner_max_iter', type=int, default=30)
     parser.add_argument('--causal_pruner_loss_tol', type=float, default=1e-7)
     parser.add_argument('--causal_pruner_num_iter_no_change', type=int, default=2)
-    parser.add_argument('--causal_pruner_batch_size', type=int, default=16, help="Use -1 for full dataset")
+    parser.add_argument('--causal_pruner_batch_size', type=int, default=256, help="Use -1 for full dataset")
     parser.add_argument('--num_causal_pruner_dataloader_workers', type=int, default=0),
     parser.add_argument('--num_dataloader_workers', type=int, default=0),
-    parser.add_argument('--causal_pruner_pin_memory', action=argparse.BooleanOptionalAction, default=  False),
-    parser.add_argument('--pin_memory', action=argparse.BooleanOptionalAction, default=  False),
+    parser.add_argument('--causal_pruner_pin_memory', action=argparse.BooleanOptionalAction, default=False),
+    parser.add_argument('--pin_memory', action=argparse.BooleanOptionalAction, default=False),
     parser.add_argument('--delete_checkpoint_dir_after_training', action=argparse.BooleanOptionalAction, default=True)
     parser.add_argument('--causal_pruner_backend', type=str, default='torch', choices=['sklearn', 'torch'])
     parser.add_argument('--verbose', action=argparse.BooleanOptionalAction, default=True)
@@ -81,25 +81,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--model",
         type=str,
-        choices=[
-            "alexnet",
-            "lenet",
-            "mlpnet",
-            "mlpnet_trained",
-            "mobilenet_trained",
-            "mobilenet_untrained",
-            "resnet18",
-            "resnet20",
-            "resnet20_trained",
-            "resnet50_torch",
-            "resnet50_trained",
-            "resnet50_untrained",
-        ],
-        default="resnet20",
+        default="resnet56",
         help="Model name",
     )
-
-
 
     parser.add_argument(
         "--device_ids",
@@ -171,46 +155,48 @@ def main():
 
     # 4. Instantiate and run the experiment
     for strategy in ['GlobalCausalPruning', 'GlobalMagWeight', 'LayerMagWeight', 'RandomPruning']:
+        print(f"Starting new strategy: {strategy}")
         for  c in [1,2,4,8,16,32,64]:
             if strategy == 'GlobalCausalPruning':
                 print("Configuring GlobalCausalPruning strategy...")
                 prune_amount = 1.0 - (1.0 / c)
+                print(f"{prune_amount} : This is prune amount")
                 print("Initializing Lightning Fabric...")
                 fabric = Fabric(
                     devices=args.device_ids, accelerator="auto", precision=args.precision
                 )
                 fabric.launch()
-                train_dataset, test_dataset, num_classes = get_dataset(
-                    args.dataset.lower(),
-                    args.model,
-                    args.dataset_root_dir,
-                )
-                collate_fn = get_collate_fn(
-                    args.mixup_alpha, args.cutmix_alpha, num_classes=num_classes
-                )
+                # train_dataset, test_dataset, num_classes = get_dataset(
+                #     args.dataset.lower(),
+                #     args.model,
+                #     args.dataset_root_dir,
+                # )
+                # self.collate_fn = get_collate_fn(
+                #     args.mixup_alpha, args.cutmix_alpha, num_classes=num_classes
+                # )
                 world_size = fabric.world_size
                 batch_size = args.batch_size // world_size
                 batch_size_while_pruning = args.batch_size_while_pruning // world_size
                 
-                data_config = DataConfig(
-                    train_dataset=train_dataset,
-                    test_dataset=test_dataset,
-                    batch_size=batch_size,
-                    batch_size_while_pruning=batch_size_while_pruning,
-                    num_workers=args.num_dataloader_workers,
-                    pin_memory=args.pin_memory,
-                    shuffle=args.shuffle_dataset,
-                    num_classes=num_classes,
-                    collate_fn=collate_fn,
-                )
-                prune_dataloader = DataLoader(
-                    data_config.train_dataset,
-                    batch_size=data_config.batch_size_while_pruning,
-                    shuffle=data_config.shuffle,
-                    pin_memory=data_config.pin_memory,
-                    num_workers=data_config.num_workers,
-                    persistent_workers=data_config.num_workers > 0,
-                )
+                # data_config = DataConfig(
+                #     train_dataset=train_dataset,
+                #     test_dataset=test_dataset,
+                #     batch_size=batch_size,
+                #     batch_size_while_pruning=batch_size_while_pruning,
+                #     num_workers=args.num_dataloader_workers,
+                #     pin_memory=args.pin_memory,
+                #     shuffle=args.shuffle_dataset,
+                #     num_classes=num_classes,
+                #     collate_fn=collate_fn,
+                # )
+                # prune_dataloader = DataLoader(
+                #     data_config.train_dataset,
+                #     batch_size=data_config.batch_size_while_pruning,
+                #     shuffle=data_config.shuffle,
+                #     pin_memory=data_config.pin_memory,
+                #     num_workers=data_config.num_workers,
+                #     persistent_workers=data_config.num_workers > 0,
+                # )
 
                 causal_weights_trainer_config = CausalWeightsTrainerConfig(
                     fabric = fabric,
@@ -231,7 +217,7 @@ def main():
                     model= None,#MUST BE MODIFIED BY PRUNING EXPERIMENT
                     pruner="SGDPruner",
                     checkpoint_dir= None,#MUST BE MODIFIED BY PRUNING EXPERIMENT
-                    prune_dataloader= prune_dataloader,
+                    prune_dataloader= None,
                     prune_optimizer_lr=args.causal_pruner_train_lr,
                     num_prune_iterations=args.num_prune_iterations,
                     num_prune_epochs=args.num_prune_epochs,
@@ -262,11 +248,10 @@ def main():
             exp.run()
     print(f"\nExperiment finished. Results saved in {exp_path.resolve()}")
 
-    df = df_from_results('results')
-    print(df)
+    # df = df_from_results('results')
 
-    plot_df(df, 'compression', 'post_acc5', markers='strategy', fig=False, colors='strategy')
-    plt.savefig('figures/compression_vs_postacc5')
+    # plot_df(df, 'compression', 'post_acc5', markers='strategy', fig=False, colors='strategy')
+    
 
 
 if __name__ == "__main__":

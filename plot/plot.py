@@ -115,6 +115,7 @@ def plot_df(df,
     ticks = sorted(set(df[x_column]))
     plt.xticks(ticks, map(str, ticks))
     plt.legend()
+    plt.savefig(f'{x_column}_vs_{y_column}')
     
 
 # It's also good practice to clear the figure from memory afterwards,

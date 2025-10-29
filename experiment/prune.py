@@ -47,6 +47,7 @@ class PruningExperiment(TrainingExperiment):
         strategy_init_kwargs = self.strategy_kwargs.copy()
 
         if strategy == 'GlobalCausalPruning':
+
             printc(f"Preparing special configuration for {strategy}", color='BLUE')
             
             if 'sgd_pruner_config' not in strategy_init_kwargs:
@@ -54,10 +55,14 @@ class PruningExperiment(TrainingExperiment):
             
             config = strategy_init_kwargs['sgd_pruner_config']
             config.model = self.model
+            config.prune_dataloader = self.train_dl
             causal_ckpt_path =  Path('_results/causal_checkpoints')
             causal_ckpt_path.mkdir(exist_ok=True)
             config.checkpoint_dir = str(causal_ckpt_path)
+            
             strategy_init_kwargs['sgd_pruner_config'] = config
+            
+
         
         self.pruning = constructor(self.model, x, y, compression=compression, **strategy_init_kwargs)
         

@@ -58,7 +58,7 @@ def df_from_results(results_path, glob='*'):
         results.append(row)
 
     df = pd.DataFrame(data=results, columns=COLUMNS)
-    df = broadcast_unitary_compression(df)
+    # df = broadcast_unitary_compression(df)
     df = df.sort_values(by=['dataset', 'model', 'strategy', 'compression', 'seed'])
     return df
 
