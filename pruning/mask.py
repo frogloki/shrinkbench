@@ -23,9 +23,8 @@ def mask_module(module, masks):
     new_children = {}
 
     for name, submodule in module.named_children():
-
         if submodule in masks:
-            mask_kwargs = {k+'_mask': v for k, v in masks[submodule].items()}
+            mask_kwargs = {k + "_mask": v for k, v in masks[submodule].items()}
             if isinstance(submodule, MaskedModule):
                 submodule.set_masks(**mask_kwargs)
             else:
@@ -58,9 +57,7 @@ def apply_masks(module, masks):
         torch.nn.Module -- Same as id as input module, but after masking
     """
     for name, submodule in module.named_children():
-
         if submodule in masks:
-
             for attr, mask in masks[submodule].items():
                 param = getattr(submodule, attr)
                 mask = _same_device(_ensure_tensor(mask), param)
@@ -73,6 +70,7 @@ def apply_masks(module, masks):
 
 
 # Aux functions
+
 
 def masks_details(model, masks):
     """Debug information for collection of masks
@@ -91,6 +89,6 @@ def masks_details(model, masks):
     for name, module in model.named_modules():
         if module in masks:
             for k, v in masks[module].items():
-                rows.append([name, k, 1/v.mean(), np.prod(v.shape), v.shape])
-    columns = ['module', 'param', 'comp', 'size', 'shape']
+                rows.append([name, k, 1 / v.mean(), np.prod(v.shape), v.shape])
+    columns = ["module", "param", "comp", "size", "shape"]
     return pd.DataFrame(rows, columns=columns)

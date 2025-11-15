@@ -10,9 +10,7 @@ from .utils import get_params
 
 
 class Pruning(ABC):
-
-    """Base class for Pruning operations
-    """
+    """Base class for Pruning operations"""
 
     def __init__(self, model, inputs=None, outputs=None, **pruning_params):
         """Construct Pruning class
@@ -36,9 +34,7 @@ class Pruning(ABC):
 
     @abstractmethod
     def model_masks(self, prunable=None):
-        """Compute masks for a given model
-
-        """
+        """Compute masks for a given model"""
         # TODO Also accept a dataloader
         pass
         # return masks
@@ -60,7 +56,7 @@ class Pruning(ABC):
         s = f"{self.__class__.__name__}("
         for k in self.pruning_params:
             s += f"{k}={repr(getattr(self, k))}, "
-        s = s[:-2] + ')'
+        s = s[:-2] + ")"
         return s
 
     def __str__(self):
@@ -80,17 +76,28 @@ class Pruning(ABC):
         for name, module in self.model.named_modules():
             for pname, param in module.named_parameters(recurse=False):
                 if isinstance(module, MaskedModule):
-                    compression = 1/getattr(module, pname+'_mask').detach().cpu().numpy().mean()
+                    compression = (
+                        1
+                        / getattr(module, pname + "_mask").detach().cpu().numpy().mean()
+                    )
                 else:
                     compression = 1
                 shape = param.detach().cpu().numpy().shape
-                rows.append([name, pname, compression, np.prod(shape), shape, self.can_prune(module)])
-        columns = ['module', 'param', 'comp', 'size', 'shape', 'prunable']
+                rows.append(
+                    [
+                        name,
+                        pname,
+                        compression,
+                        np.prod(shape),
+                        shape,
+                        self.can_prune(module),
+                    ]
+                )
+        columns = ["module", "param", "comp", "size", "shape", "prunable"]
         return pd.DataFrame(rows, columns=columns)
 
 
 class LayerPruning(Pruning):
-
     @abstractmethod
     def layer_masks(self, module):
         """Instead of implementing masks for the entire model at once
@@ -115,4 +122,4 @@ class LayerPruning(Pruning):
             if masks_ is not None:
                 masks[module] = masks_
 
-        return masks
+        return
