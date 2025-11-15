@@ -82,7 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--epochs",
         type=int,
-        default=20,
+        default=100,
         help="Number of fine-tuning epochs after pruning",
     )
 
@@ -263,8 +263,8 @@ def main():
     for strategy in [
         "GlobalCausalPruning",
         "GlobalMagWeight",
-        "LayerMagWeight",
-        "RandomPruning",
+        # "LayerMagWeight",
+        # "RandomPruning",
     ]:
         print(f"Starting new strategy: {strategy}")
         for c in [2, 4, 8, 16, 32, 64]:
