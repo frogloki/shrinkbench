@@ -17,8 +17,8 @@ from causalpruner import (
     SGDPrunerConfig,
 )
 
-
-class GlobalCausalPruning(VisionPruning):
+#I can use the same class as my layer wise logic is inside sgd_pruner.py
+class LayerCausalPruning(VisionPruning):
     def __init__(
         self, model, inputs=None, outputs=None, compression=1, sgd_pruner_config=None
     ):

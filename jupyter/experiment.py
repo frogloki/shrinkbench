@@ -82,7 +82,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--epochs",
         type=int,
-        default=100,
+        default=200,
         help="Number of fine-tuning epochs after pruning",
     )
 
@@ -102,7 +102,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--causal_pruner_train_lr",
         type=float,
-        default=1e-3,
+        default=5e-4,
         help="Prune optimizer learning rate for Causal Pruning",
     )
     parser.add_argument(
@@ -146,7 +146,7 @@ def parse_args() -> argparse.Namespace:
         parser.add_argument(
             "--causal_pruner_pin_memory",
             action=argparse.BooleanOptionalAction,
-            default=False,
+            default=True,
         ),
     )
     (
@@ -260,103 +260,103 @@ def main():
     fabric.launch()
 
     # 4. Instantiate and run the experiment
-    for strategy in [
-        "GlobalCausalPruning",
-        "GlobalMagWeight",
-        # "LayerMagWeight",
-        # "RandomPruning",
-    ]:
-        print(f"Starting new strategy: {strategy}")
-        for c in [2, 4, 8, 16, 32, 64]:
-            # for c in [2]:
-            if strategy == "GlobalCausalPruning":
-                print("Configuring GlobalCausalPruning strategy...")
-                prune_amount = 1.0 - (1.0 / c)
-                print(f"{prune_amount} : This is prune amount")
-                # train_dataset, test_dataset, num_classes = get_dataset(
-                #     args.dataset.lower(),
-                #     args.model,
-                #     args.dataset_root_dir,
-                # )
-                # self.collate_fn = get_collate_fn(
-                #     args.mixup_alpha, args.cutmix_alpha, num_classes=num_classes
-                # )
-                world_size = fabric.world_size
-                batch_size = args.batch_size // world_size
-                batch_size_while_pruning = args.batch_size_while_pruning // world_size
+    # for strategy in [
+    #     "LayerCausalPruning",
+    #     "GlobalMagWeight",
+    #     # "LayerMagWeight",
+    #     # "RandomPruning",
+    # ]:
+    #     print(f"Starting new strategy: {strategy}")
+    #     for c in [2, 4, 8, 16, 32, 64]:
+    #         # for c in [2]:
+    #         if strategy == "LayerCausalPruning":
+    #             print("Configuring LayerCausalPruning strategy...")
+    #             prune_amount = 1.0 - (1.0 / c)
+    #             print(f"{prune_amount} : This is prune amount")
+    #             # train_dataset, test_dataset, num_classes = get_dataset(
+    #             #     args.dataset.lower(),
+    #             #     args.model,
+    #             #     args.dataset_root_dir,
+    #             # )
+    #             # self.collate_fn = get_collate_fn(
+    #             #     args.mixup_alpha, args.cutmix_alpha, num_classes=num_classes
+    #             # )
+    #             world_size = fabric.world_size
+    #             batch_size = args.batch_size // world_size
+    #             batch_size_while_pruning = args.batch_size_while_pruning // world_size
 
-                # data_config = DataConfig(
-                #     train_dataset=train_dataset,
-                #     test_dataset=test_dataset,
-                #     batch_size=batch_size,
-                #     batch_size_while_pruning=batch_size_while_pruning,
-                #     num_workers=args.num_dataloader_workers,
-                #     pin_memory=args.pin_memory,
-                #     shuffle=args.shuffle_dataset,
-                #     num_classes=num_classes,
-                #     collate_fn=collate_fn,
-                # )
-                # prune_dataloader = DataLoader(
-                #     data_config.train_dataset,
-                #     batch_size=data_config.batch_size_while_pruning,
-                #     shuffle=data_config.shuffle,
-                #     pin_memory=data_config.pin_memory,
-                #     num_workers=data_config.num_workers,
-                #     persistent_workers=data_config.num_workers > 0,
-                # )
+    #             # data_config = DataConfig(
+    #             #     train_dataset=train_dataset,
+    #             #     test_dataset=test_dataset,
+    #             #     batch_size=batch_size,
+    #             #     batch_size_while_pruning=batch_size_while_pruning,
+    #             #     num_workers=args.num_dataloader_workers,
+    #             #     pin_memory=args.pin_memory,
+    #             #     shuffle=args.shuffle_dataset,
+    #             #     num_classes=num_classes,
+    #             #     collate_fn=collate_fn,
+    #             # )
+    #             # prune_dataloader = DataLoader(
+    #             #     data_config.train_dataset,
+    #             #     batch_size=data_config.batch_size_while_pruning,
+    #             #     shuffle=data_config.shuffle,
+    #             #     pin_memory=data_config.pin_memory,
+    #             #     num_workers=data_config.num_workers,
+    #             #     persistent_workers=data_config.num_workers > 0,
+    #             # )
 
-                causal_weights_trainer_config = CausalWeightsTrainerConfig(
-                    fabric=fabric,
-                    init_lr=args.causal_pruner_init_lr,
-                    l1_regularization_coeff=args.causal_pruner_l1_regularization_coeff,
-                    prune_amount=prune_amount,
-                    max_iter=args.causal_pruner_max_iter,
-                    loss_tol=args.causal_pruner_loss_tol,
-                    num_iter_no_change=args.causal_pruner_num_iter_no_change,
-                    batch_size=args.causal_pruner_batch_size,
-                    num_dataloader_workers=args.num_causal_pruner_dataloader_workers,
-                    pin_memory=args.causal_pruner_pin_memory,
-                    backend=args.causal_pruner_backend,
-                )
+    #             causal_weights_trainer_config = CausalWeightsTrainerConfig(
+    #                 fabric=fabric,
+    #                 init_lr=args.causal_pruner_init_lr,
+    #                 l1_regularization_coeff=args.causal_pruner_l1_regularization_coeff,
+    #                 prune_amount=prune_amount,
+    #                 max_iter=args.causal_pruner_max_iter,
+    #                 loss_tol=args.causal_pruner_loss_tol,
+    #                 num_iter_no_change=args.causal_pruner_num_iter_no_change,
+    #                 batch_size=args.causal_pruner_batch_size,
+    #                 num_dataloader_workers=args.num_causal_pruner_dataloader_workers,
+    #                 pin_memory=args.causal_pruner_pin_memory,
+    #                 backend=args.causal_pruner_backend,
+    #             )
 
-                sgd_pruner_config = SGDPrunerConfig(
-                    fabric=fabric,
-                    model=None,  # MUST BE MODIFIED BY PRUNING EXPERIMENT
-                    pruner="SGDPruner",
-                    checkpoint_dir=None,  # MUST BE MODIFIED BY PRUNING EXPERIMENT
-                    prune_dataloader=None,
-                    prune_optimizer_lr=args.causal_pruner_train_lr,
-                    num_prune_iterations=args.num_prune_iterations,
-                    num_prune_epochs=args.num_prune_epochs,
-                    threaded_checkpoint_writer=args.causal_pruner_threaded_checkpoint_writer,
-                    delete_checkpoint_dir_after_training=args.delete_checkpoint_dir_after_training,
-                    trainer_config=causal_weights_trainer_config,
-                    return_masks=True,  # Ensure masks are returned
-                    verbose=args.verbose,
-                    start_clean=args.start_clean,
-                    reset_weights=args.reset_weights_after_pruning,
-                    reset_params=args.reset_params_after_pruning,
-                )
+    #             sgd_pruner_config = SGDPrunerConfig(
+    #                 fabric=fabric,
+    #                 model=None,  # MUST BE MODIFIED BY PRUNING EXPERIMENT
+    #                 pruner="SGDPruner",
+    #                 checkpoint_dir=None,  # MUST BE MODIFIED BY PRUNING EXPERIMENT
+    #                 prune_dataloader=None,
+    #                 prune_optimizer_lr=args.causal_pruner_train_lr,
+    #                 num_prune_iterations=args.num_prune_iterations,
+    #                 num_prune_epochs=args.num_prune_epochs,
+    #                 threaded_checkpoint_writer=args.causal_pruner_threaded_checkpoint_writer,
+    #                 delete_checkpoint_dir_after_training=args.delete_checkpoint_dir_after_training,
+    #                 trainer_config=causal_weights_trainer_config,
+    #                 return_masks=True,  # Ensure masks are returned
+    #                 verbose=args.verbose,
+    #                 start_clean=args.start_clean,
+    #                 reset_weights=args.reset_weights_after_pruning,
+    #                 reset_params=args.reset_params_after_pruning,
+    #             )
 
-                strategy_kwargs["sgd_pruner_config"] = sgd_pruner_config
-            exp = PruningExperiment(
-                dataset=args.dataset,
-                model=args.model,
-                strategy=strategy,
-                compression=c,
-                seed=args.seed,
-                dl_kwargs=dl_kwargs,
-                train_kwargs=train_kwargs,
-                pretrained=args.pretrained,
-                **strategy_kwargs,
-            )
+    #             strategy_kwargs["sgd_pruner_config"] = sgd_pruner_config
+    #         exp = PruningExperiment(
+    #             dataset=args.dataset,
+    #             model=args.model,
+    #             strategy=strategy,
+    #             compression=c,
+    #             seed=args.seed,
+    #             dl_kwargs=dl_kwargs,
+    #             train_kwargs=train_kwargs,
+    #             pretrained=args.pretrained,
+    #             **strategy_kwargs,
+    #         )
 
-            exp.run()
+    #         exp.run()
     print(f"\nExperiment finished. Results saved in {exp_path.resolve()}")
 
-    # df = df_from_results('results')
+    df = df_from_results('results')
 
-    # plot_df(df, 'compression', 'post_acc5', markers='strategy', fig=False, colors='strategy')
+    plot_df(df, 'compression', 'post_acc1', markers='strategy', fig=False, colors='strategy')
 
 
 if __name__ == "__main__":

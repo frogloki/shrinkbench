@@ -46,12 +46,12 @@ class PruningExperiment(TrainingExperiment):
         
         strategy_init_kwargs = self.strategy_kwargs.copy()
 
-        if strategy == 'GlobalCausalPruning':
+        if strategy == 'LayerCausalPruning':
 
             printc(f"Preparing special configuration for {strategy}", color='BLUE')
             
             if 'sgd_pruner_config' not in strategy_init_kwargs:
-                raise ValueError("For GlobalCausalPruning, you must provide an 'sgd_pruner_config' object when initializing PruningExperiment.")
+                raise ValueError("For LayerCausalPruning, you must provide an 'sgd_pruner_config' object when initializing PruningExperiment.")
             
             config = strategy_init_kwargs['sgd_pruner_config']
             config.model = self.model
