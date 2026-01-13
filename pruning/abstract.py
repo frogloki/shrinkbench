@@ -49,7 +49,10 @@ class Pruning(ABC):
         pass
 
     def prunable_modules(self):
-        prunable = [module for module in self.model.modules() if self.can_prune(module)]
+        prunable = [
+            module for name, module in self.model.named_modules() 
+            if self.can_prune(module) and 'attn' not in name
+        ]
         return prunable
 
     def __repr__(self):

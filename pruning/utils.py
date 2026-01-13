@@ -153,11 +153,11 @@ def fraction_to_keep(compression, model, prunable_modules):
     Returns:
         {float} -- Fraction of prunable parameters to keep to achieve desired compression
     """
-    from ..metrics import model_size
-    total_size, _ = model_size(model)
-    prunable_size = sum([model_size(m)[0] for m in prunable_modules])
-    nonprunable_size = total_size - prunable_size
-    fraction = 1 / prunable_size * (total_size/compression - nonprunable_size)
+    # from ..metrics import model_size
+    # total_size, _ = model_size(model)
+    # prunable_size = sum([model_size(m)[0] for m in prunable_modules])
+    # nonprunable_size = total_size - prunable_size
+    fraction = 1 / compression
     assert 0 < fraction <= 1, \
         f"Cannot compress to {1/compression} model with {nonprunable_size/total_size}" + \
         "fraction of unprunable parameters"
