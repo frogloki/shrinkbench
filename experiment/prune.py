@@ -56,7 +56,7 @@ class PruningExperiment(TrainingExperiment):
             config = strategy_init_kwargs['sgd_pruner_config']
             config.model = self.model
             config.prune_dataloader = self.train_dl
-            causal_ckpt_path =  Path('_results/causal_checkpoints')
+            causal_ckpt_path =  Path('/tmp/causalcheckpoints')
             causal_ckpt_path.mkdir(exist_ok=True)
             config.checkpoint_dir = str(causal_ckpt_path)
             
@@ -85,10 +85,10 @@ class PruningExperiment(TrainingExperiment):
         with open(self.path / 'metrics.json', 'w') as f:
             json.dump(self.metrics, f, indent=4)
         printc(json.dumps(self.metrics, indent=4), color='GRASS')
-        summary = self.pruning.summary()
-        summary_path = self.path / 'masks_summary.csv'
-        summary.to_csv(summary_path)
-        print(summary)
+        # summary = self.pruning.summary()
+        # summary_path = self.path / 'masks_summary.csv'
+        # summary.to_csv(summary_path)
+        # print(summary)
 
     def pruning_metrics(self):
 
